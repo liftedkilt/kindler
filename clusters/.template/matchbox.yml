@@ -1,0 +1,42 @@
+systemd:
+  units:
+    - name: matchbox.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Matchbox Container
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        TimeoutStartSec=0
+        Restart=always
+        ExecStartPre=-/usr/bin/docker stop %n
+        ExecStartPre=-/usr/bin/docker rm %n
+        ExecStartPre=/usr/bin/docker pull quay.io/coreos/matchbox:latest
+        ExecStart=/usr/bin/docker run --net=host --rm -v /var/lib/matchbox:/var/lib/matchbox:Z -v /etc/matchbox:/etc/matchbox:Z,ro quay.io/coreos/matchbox:latest -address=0.0.0.0:8080 -rpc-address=0.0.0.0:8081 -log-level=debug
+
+        [Install]
+        WantedBy=multi-user.target
+storage:
+  files:
+    - path: /etc/matchbox/ca.crt
+      filesystem: root
+      contents:
+        inline: <CA_CRT>
+    - path: /etc/matchbox/server.crt
+      filesystem: root
+      contents:
+        inline: <SERVER_CRT>
+    - path: /etc/matchbox/server.key
+      filesystem: root
+      contents:
+        inline: <SERVER_KEY>
+    - path: /etc/matchbox/client.crt
+      filesystem: root
+      contents:
+        inline: <CLIENT_CRT>
+    - path: /etc/matchbox/client.key
+      filesystem: root
+      contents:
+        inline: <CLIENT_KEY>

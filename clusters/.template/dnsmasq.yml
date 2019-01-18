@@ -1,0 +1,39 @@
+systemd:
+  units:
+    - name: dnsmasq.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Dnsmasq Container
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        TimeoutStartSec=0
+        Restart=always
+        ExecStartPre=-/usr/bin/docker stop %n
+        ExecStartPre=-/usr/bin/docker rm %n
+        ExecStartPre=/usr/bin/docker pull quay.io/coreos/matchbox:latest
+        ExecStart=/usr/bin/docker run --rm --cap-add=NET_ADMIN --net=host quay.io/coreos/dnsmasq \\
+        -d -q \\
+        -v /etc/dnsmasq.conf:/etc/dnsmasq.conf \\
+        --conf-file=/etc/dnsmasq.conf \\
+        --dhcp-range==<PXE_NET>.3,=<PXE_NET>.254 \\
+        --enable-tftp --tftp-root=/var/lib/tftpboot \\
+        --dhcp-match=set:bios,option:client-arch,0 \\
+        --dhcp-boot=tag:bios,undionly.kpxe \\
+        --dhcp-match=set:efi32,option:client-arch,6 \\
+        --dhcp-boot=tag:efi32,ipxe.efi \\
+        --dhcp-match=set:efibc,option:client-arch,7 \\
+        --dhcp-boot=tag:efibc,ipxe.efi \\
+        --dhcp-match=set:efi64,option:client-arch,9 \\
+        --dhcp-boot=tag:efi64,ipxe.efi \\
+        --dhcp-userclass=set:ipxe,iPXE \\
+        --dhcp-boot=tag:ipxe,http://matchbox-<CLUSTER_NAME><CLUSTER_TLD>:8080/boot.ipxe \\
+        --address=/matchbox-<CLUSTER_NAME><CLUSTER_TLD>/<HOST_IP> \\
+        --interface=<PXE_INTERFACE> \\
+        --log-queries \\
+        --log-dhcp
+
+        [Install]
+        WantedBy=multi-user.target

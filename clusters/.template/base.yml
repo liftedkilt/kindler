@@ -1,0 +1,23 @@
+networkd:
+  units:
+    - name: static-pxe.network
+      contents: |
+        [Match]
+        Name=<PXE_INTERFACE>
+
+        [Network]
+        Address=<PXE_NET>.254/24
+    - name: static-host.network
+      contents: |
+        [Match]
+        Name=<HOST_INTERFACE>
+
+        [Network]
+        Address=<HOST_IP>
+        Gateway=<HOST_GATEWAY>
+        DNS=<HOST_DNS>
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - <SSH_KEY>
